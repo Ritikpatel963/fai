@@ -1,0 +1,11 @@
+// Fonts
+@import url('https://fonts.bunny.net/css?family=Nunito');
+
+// Variables
+@import 'variables';
+
+// Override Bootstrap Primary Color
+$primary: #1D3621;
+
+// Bootstrap
+@import 'bootstrap/scss/bootstrap';
