@@ -41,8 +41,10 @@
                     <td>{{ $blog->title }}</td>
                     <td>{{ $blog->author->name ?? 'Admin' }}</td>
                     <td>
-                        @if($blog->status)
+                        @if($blog->status === 'published')
                             <span class="badge bg-success">Published</span>
+                        @elseif($blog->status === 'scheduled')
+                            <span class="badge bg-warning text-dark">Scheduled</span>
                         @else
                             <span class="badge bg-secondary">Draft</span>
                         @endif

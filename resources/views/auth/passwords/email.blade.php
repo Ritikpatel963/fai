@@ -74,6 +74,19 @@
                 </div>
             @endif
 
+            @if (session('reset_link'))
+                <div class="alert mb-4" style="background-color: #e8f5e9; border: 1px solid #1D3621; border-radius: 8px;">
+                    <p class="mb-2 fw-semibold" style="color: #1D3621;">
+                        <i class="bi bi-check-circle me-1"></i> Reset link generated for <strong>{{ session('reset_email') }}</strong>
+                    </p>
+                    <p class="mb-2 text-muted small">Click the link below to reset your password:</p>
+                    <a href="{{ session('reset_link') }}" class="btn btn-sm btn-success w-100">
+                        <i class="bi bi-key me-1"></i> Click here to Reset Password
+                    </a>
+                    <p class="mt-2 mb-0 text-muted" style="font-size: 0.75rem; word-break: break-all;">{{ session('reset_link') }}</p>
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('password.email') }}">
                 @csrf
                 <div class="mb-4">
