@@ -59,6 +59,11 @@
                     <label class="form-label">Meta Description</label>
                     <textarea name="seo_description" class="form-control" rows="2">{{ $blog->seo->meta_description ?? '' }}</textarea>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label">Meta Keywords</label>
+                    <input type="text" name="seo_keywords" class="form-control" value="{{ $blog->seo->focus_keyword ?? '' }}" placeholder="e.g. laravel, php, web development">
+                    <small class="text-muted">Separate keywords with commas</small>
+                </div>
             </div>
         </div>
         
@@ -73,13 +78,6 @@
                         <option value="draft" {{ $blog->status == 'draft' ? 'selected' : '' }}>Draft</option>
                         <option value="published" {{ $blog->status == 'published' ? 'selected' : '' }}>Published</option>
                         <option value="scheduled" {{ $blog->status == 'scheduled' ? 'selected' : '' }}>Scheduled</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Visibility</label>
-                    <select name="visibility" class="form-select">
-                        <option value="public" {{ $blog->visibility == 'public' ? 'selected' : '' }}>Public</option>
-                        <option value="private" {{ $blog->visibility == 'private' ? 'selected' : '' }}>Private</option>
                     </select>
                 </div>
                 <div class="d-flex justify-content-between mt-4">

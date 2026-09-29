@@ -45,23 +45,38 @@
                 @csrf
                 <div class="mb-3">
                     <label class="form-label">Current Password</label>
-                    <input type="password" name="current_password" class="form-control @error('current_password') is-invalid @enderror" required>
-                    @error('current_password')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                    <div class="input-group">
+                        <input type="password" name="current_password" id="current_password" class="form-control @error('current_password') is-invalid @enderror" required>
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('current_password', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        @error('current_password')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
                 
                 <div class="mb-3">
                     <label class="form-label">New Password</label>
-                    <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" required>
-                    @error('password')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                    <div class="input-group">
+                        <input type="password" name="password" id="new_password" class="form-control @error('password') is-invalid @enderror" required>
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('new_password', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        @error('password')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
 
                 <div class="mb-4">
                     <label class="form-label">Confirm New Password</label>
-                    <input type="password" name="password_confirmation" class="form-control" required>
+                    <div class="input-group">
+                        <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" required>
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password_confirmation', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">Update Password</button>
@@ -69,4 +84,20 @@
         </section>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function togglePassword(fieldId, btn) {
+        const input = document.getElementById(fieldId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    }
+</script>
+@endpush
 @endsection

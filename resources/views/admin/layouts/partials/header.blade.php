@@ -16,12 +16,20 @@
                 <span class="profile-copy">{{ auth()->user()?->name ?? 'Admin' }}</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-                <li><span class="dropdown-item-text">Signed in as Admin</span></li>
+                <li><span class="dropdown-item-text">Signed in as {{ auth()->user()?->name ?? 'Admin' }}</span></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="{{ route('admin.profile.index') }}">
+                        <i class="bi bi-person me-2"></i>Profile
+                    </a>
+                </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button class="dropdown-item" type="submit">Sign out</button>
+                        <button class="dropdown-item" type="submit">
+                            <i class="bi bi-box-arrow-right me-2"></i>Sign out
+                        </button>
                     </form>
                 </li>
             </ul>

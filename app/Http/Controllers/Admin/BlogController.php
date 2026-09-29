@@ -20,7 +20,7 @@ class BlogController extends Controller
                 'last_page' => $blogs->lastPage(),
             ]);
         }
-        $blogs = Blog::latest()->paginate(10);
+        $blogs = Blog::with('author')->latest()->paginate(10);
         return view('admin.blogs.index', compact('blogs'));
     }
 
@@ -59,10 +59,11 @@ class BlogController extends Controller
             $blog->tags()->sync($request->tags);
         }
 
-        if ($request->filled('seo_title') || $request->filled('seo_description')) {
+        if ($request->filled('seo_title') || $request->filled('seo_description') || $request->filled('seo_keywords')) {
             $blog->seo()->create([
-                'title' => $request->seo_title,
-                'description' => $request->seo_description,
+                'meta_title' => $request->seo_title,
+                'meta_description' => $request->seo_description,
+                'focus_keyword' => $request->seo_keywords,
             ]);
         }
 
@@ -93,6 +94,7 @@ class BlogController extends Controller
             'featured_image' => $request->featured_image,
             'status' => $request->status,
             'visibility' => $request->visibility ?? 'public',
+            'published_at' => $request->status === 'published' ? ($blog->published_at ?? now()) : null,
         ]);
 
         if ($request->has('categories')) {
@@ -102,12 +104,13 @@ class BlogController extends Controller
             $blog->tags()->sync($request->tags);
         }
 
-        if ($request->filled('seo_title') || $request->filled('seo_description')) {
+        if ($request->filled('seo_title') || $request->filled('seo_description') || $request->filled('seo_keywords')) {
             $blog->seo()->updateOrCreate(
                 ['blog_id' => $blog->id],
                 [
-                    'title' => $request->seo_title,
-                    'description' => $request->seo_description,
+                    'meta_title' => $request->seo_title,
+                    'meta_description' => $request->seo_description,
+                    'focus_keyword' => $request->seo_keywords,
                 ]
             );
         }
