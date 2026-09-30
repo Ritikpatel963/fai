@@ -38,4 +38,9 @@ Route::prefix('admin')
         
         // Media Library
         Route::resource('media', App\Http\Controllers\Admin\MediaController::class)->except(['create', 'edit', 'show']);
+
+        // Site Settings
+        Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings/header', [App\Http\Controllers\Admin\SettingController::class, 'saveHeader'])->name('settings.header');
+        Route::post('/settings/footer', [App\Http\Controllers\Admin\SettingController::class, 'saveFooter'])->name('settings.footer');
     });

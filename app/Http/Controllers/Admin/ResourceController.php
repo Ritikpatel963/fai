@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Resource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ResourceController extends Controller
 {
@@ -36,7 +37,20 @@ class ResourceController extends Controller
             'status'      => 'required|in:0,1',
             'description' => 'nullable|string',
             'file_type'   => 'nullable|string|max:50',
+            'file_upload' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,mp4,mp3',
         ]);
+
+        // Handle file upload
+        $filePath = null;
+        if ($request->hasFile('file_upload')) {
+            $file = $request->file('file_upload');
+            $filename = uniqid('resource_') . '.' . $file->getClientOriginalExtension();
+            if (!Storage::disk('public')->exists('resources')) {
+                Storage::disk('public')->makeDirectory('resources');
+            }
+            $file->storeAs('public/resources', $filename);
+            $filePath = '/storage/resources/' . $filename;
+        }
 
         Resource::create([
             'title'             => $request->title,
@@ -44,7 +58,7 @@ class ResourceController extends Controller
             'short_description' => $request->short_description,
             'description'       => $request->description,
             'featured_image'    => $request->featured_image,
-            'file'              => $request->file_path,
+            'file'              => $filePath,
             'file_type'         => $request->file_type,
             'status'            => $request->status,
             'published_at'      => $request->status ? now() : null,
@@ -86,7 +100,20 @@ class ResourceController extends Controller
             'status'      => 'required|in:0,1',
             'description' => 'nullable|string',
             'file_type'   => 'nullable|string|max:50',
+            'file_upload' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,mp4,mp3',
         ]);
+
+        // Handle file upload — keep existing if no new file uploaded
+        $filePath = $resource->file;
+        if ($request->hasFile('file_upload')) {
+            $file = $request->file('file_upload');
+            $filename = uniqid('resource_') . '.' . $file->getClientOriginalExtension();
+            if (!Storage::disk('public')->exists('resources')) {
+                Storage::disk('public')->makeDirectory('resources');
+            }
+            $file->storeAs('public/resources', $filename);
+            $filePath = '/storage/resources/' . $filename;
+        }
 
         $resource->update([
             'title'             => $request->title,
@@ -94,7 +121,7 @@ class ResourceController extends Controller
             'short_description' => $request->short_description,
             'description'       => $request->description,
             'featured_image'    => $request->featured_image,
-            'file'              => $request->file_path,
+            'file'              => $filePath,
             'file_type'         => $request->file_type,
             'status'            => $request->status,
             'published_at'      => $request->status ? ($resource->published_at ?? now()) : null,

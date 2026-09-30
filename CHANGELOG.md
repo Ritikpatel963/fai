@@ -322,3 +322,137 @@ The AJAX fetch call in `create.blade.php` was missing the `X-CSRF-TOKEN` header.
 Added `'X-CSRF-TOKEN': '{{ csrf_token() }}'` to the fetch headers. The `edit.blade.php` already had this header correctly set.
 
 ---
+
+## [2026-09-28] — Site Settings Page
+
+### 23. Setting Model Fixed
+**File changed:** `app/Models/Setting.php`
+
+The model was an empty stub. Added:
+- `$fillable` — key, value, type, group
+- `get(key, default)` — static helper to fetch a single setting value by key
+- `set(key, value, group)` — static helper to upsert a setting
+- `getGroup(group)` — static helper to get all settings for a group as key => value array
+
+---
+
+### 24. SettingController Created
+**File created:** `app/Http/Controllers/Admin/SettingController.php`
+
+Three methods implemented:
+- `index()` — loads all header and footer settings using `getGroup()` and passes to view
+- `saveHeader()` — validates and saves `header_logo` (max 500 chars), returns AJAX JSON
+- `saveFooter()` — validates and saves 9 footer fields with full backend rules:
+  - `footer_email` — email format, max 255
+  - `footer_phone` — max 20 characters
+  - `footer_description` — max 500 characters
+  - `footer_facebook/instagram/twitter/youtube/linkedin` — URL format, max 500
+  - Custom error messages for all fields
+
+---
+
+### 25. Settings Routes Registered
+**File changed:** `routes/web.php`
+
+Three routes added inside admin auth group:
+- `GET  /admin/settings` → `SettingController@index` (admin.settings.index)
+- `POST /admin/settings/header` → `SettingController@saveHeader` (admin.settings.header)
+- `POST /admin/settings/footer` → `SettingController@saveFooter` (admin.settings.footer)
+
+---
+
+### 26. Settings Seed Data
+10 default setting keys seeded via SQL:
+- Header: `header_logo`
+- Footer: `footer_logo`, `footer_email`, `footer_phone`, `footer_description`, `footer_facebook`, `footer_instagram`, `footer_twitter`, `footer_youtube`, `footer_linkedin`
+
+Default values provided for email, phone, and description. All other fields seeded as NULL for admin to fill in.
+
+---
+
+### 27. Site Settings View Created
+**File created:** `resources/views/admin/settings/index.blade.php`
+
+Single page with two sections:
+
+**Header Settings panel:**
+- Header logo input with Browse button (opens media library)
+- Live image preview when logo is selected
+- Save Header Settings button with spinner
+
+**Footer Settings panel:**
+- Footer logo input with Browse button and live preview
+- Short description textarea with real-time character counter (max 500)
+- Email field with envelope icon
+- Phone field with telephone icon
+- 5 social media link fields — Facebook (blue), Instagram (pink), Twitter/X (black), YouTube (red), LinkedIn (blue) — each with brand-colored icon prefix
+- Save Footer Settings button with spinner
+
+**Frontend validation (JavaScript):**
+- Email format check using regex
+- URL format check using `new URL()` for all social links
+- Max length checks for phone (20) and description (500)
+- Inline error display under each invalid field
+- Errors cleared on each new submit attempt
+
+**Backend validation (Laravel):**
+- All rules mirrored in `SettingController`
+- Backend errors returned as JSON and displayed inline if frontend validation is bypassed
+
+**Media Library:**
+- Integrated for both header and footer logo fields
+- Selected image auto-fills the input and updates the preview
+
+---
+
+## [2026-09-28] — Site Settings Bug Fixes
+
+### 28. Fixed Settings View — Two Bugs
+**File changed:** `resources/views/admin/settings/index.blade.php`
+
+**Bug 1 — Backend validation errors not showing inline:**
+Fetch `.then()` only runs on 2xx responses. Laravel returns 422 on validation failure which was going to `.catch()` showing a generic error. Fixed by chaining `.then(res => res.json().then(data => ({ ok: res.ok, data })))` to check `res.ok` before deciding whether to show success or inline errors. Applied to both header and footer forms.
+
+**Bug 2 — header_logo error div not visible:**
+The `invalid-feedback` div for `header_logo` was missing `d-block` class. Bootstrap only shows `invalid-feedback` automatically when inside a standard form-group structure, not inside an `input-group`. All other error divs had `d-block` — only `header_logo` was missing it. Fixed by adding `d-block`.
+
+---
+
+## [2026-09-28] — Resources File Upload Improvement
+
+### 29. Replaced URL Input with Actual File Upload in Resources
+**Files changed:**
+- `resources/views/admin/resources/create.blade.php`
+- `resources/views/admin/resources/edit.blade.php`
+- `app/Http/Controllers/Admin/ResourceController.php`
+
+**Change:**
+Replaced the "File URL / Path" text input with a proper `<input type="file">` upload field in both create and edit views.
+
+- Accepted formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP, MP4, MP3
+- Max file size: 10MB (enforced both in HTML accept attribute and backend validation)
+- File type dropdown auto-detects from uploaded file extension via JavaScript
+- Edit view shows the current file with a clickable link — leaving the upload empty keeps the existing file
+- Files saved to `storage/app/public/resources/` with unique filename prefix
+- Accessible at `/storage/resources/filename.ext` via the storage symlink
+
+---
+
+## [2026-09-28] — Resources File Upload Bug Fixes
+
+### 30. Fixed 3 Bugs in Resources File Upload
+**Files changed:**
+- `resources/views/admin/resources/create.blade.php`
+- `resources/views/admin/resources/edit.blade.php`
+- `app/Http/Controllers/Admin/ResourceController.php`
+
+**Bug 1 — Missing enctype on form tags (Frontend):**
+File uploads require `enctype="multipart/form-data"` on the form tag. Without it some browsers don't send file data correctly. Added to both create and edit form tags.
+
+**Bug 2 — Storage directory not created before upload (Backend):**
+`storeAs()` fails silently if the target directory doesn't exist. Added directory existence check and creation (`Storage::disk('public')->makeDirectory('resources')`) in both `store()` and `update()` methods, matching the same pattern used in MediaController.
+
+**Bug 3 — Storage facade not imported (Backend):**
+Was using `\Storage::` with full namespace. Added proper `use Illuminate\Support\Facades\Storage` import at the top of ResourceController.
+
+---
