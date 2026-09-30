@@ -17,7 +17,7 @@
     </div>
 </div>
 
-<form action="{{ route('admin.resources.update', $resource->id) }}" method="POST" id="resourceForm">
+<form action="{{ route('admin.resources.update', $resource->id) }}" method="POST" id="resourceForm" enctype="multipart/form-data">
     @csrf
     @method('PUT')
     <div class="row">
@@ -53,18 +53,29 @@
                 <h5 class="fw-bold mb-3"><i class="bi bi-paperclip me-2"></i>File Attachment</h5>
                 <div class="row">
                     <div class="col-md-8 mb-3">
-                        <label class="form-label">File URL / Path</label>
-                        <input type="text" name="file_path" class="form-control" value="{{ $resource->file }}" placeholder="e.g. /storage/files/document.pdf">
-                        <small class="text-muted">Enter the file path or URL to the downloadable file</small>
+                        <label class="form-label">Upload New File</label>
+                        <input type="file" name="file_upload" id="file_upload" class="form-control"
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.mp4,.mp3">
+                        <small class="text-muted">Max size: 10MB. Leave empty to keep existing file.</small>
+                        @if($resource->file)
+                            <div class="mt-2 d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark text-primary"></i>
+                                <span class="text-muted small">Current file:</span>
+                                <a href="{{ $resource->file }}" target="_blank" class="small text-truncate" style="max-width:300px;">
+                                    {{ basename($resource->file) }}
+                                </a>
+                            </div>
+                        @endif
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">File Type</label>
-                        <select name="file_type" class="form-select">
+                        <select name="file_type" id="file_type" class="form-select">
                             <option value="">— Select —</option>
                             @foreach(['pdf','doc','docx','xls','xlsx','ppt','pptx','zip','mp4','mp3','other'] as $type)
                                 <option value="{{ $type }}" {{ $resource->file_type === $type ? 'selected' : '' }}>{{ strtoupper($type) }}</option>
                             @endforeach
                         </select>
+                        <small class="text-muted">Auto-detected on file select</small>
                     </div>
                 </div>
             </div>
@@ -190,6 +201,16 @@
                 .replace(/[\s_-]+/g, '-')
                 .replace(/^-+|-+$/g, '');
             document.getElementById('slug').value = slug;
+        });
+
+        // Auto-detect file type from uploaded file extension
+        document.getElementById('file_upload').addEventListener('change', function () {
+            const file = this.files[0];
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            const typeSelect = document.getElementById('file_type');
+            const options = Array.from(typeSelect.options).map(o => o.value);
+            typeSelect.value = options.includes(ext) ? ext : 'other';
         });
 
         // Initialize Quill
