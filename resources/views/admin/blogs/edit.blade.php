@@ -35,11 +35,8 @@
                 </div>
                 
                 <div class="mb-3">
-                    <button type="button" class="btn btn-outline-secondary btn-sm mb-2" id="openMediaLibraryBtn">
-                        <i class="bi bi-card-image me-1"></i> Add Media
-                    </button>
-                    <input type="hidden" name="content" id="blogContentInput">
-                    <div id="blogEditor" style="height: 400px; font-size: 16px;">{!! $blog->content !!}</div>
+                    <label class="form-label fw-bold">Content *</label>
+                    <textarea name="content" id="blogEditor" class="form-control">{!! $blog->content !!}</textarea>
                 </div>
                 
                 <div class="mb-3">
@@ -171,6 +168,9 @@
                     
                     <!-- Library Panel -->
                     <div class="tab-pane fade show active" id="library-panel" role="tabpanel">
+                        <div class="mb-3">
+                            <input type="text" id="mediaSearchInput" class="form-control" placeholder="Search by title or keyword..." oninput="loadMedia(1)">
+                        </div>
                         <div class="row g-2" id="mediaGrid">
                             <div class="col-12 text-center text-muted p-5">Loading media...</div>
                         </div>
@@ -186,15 +186,17 @@
     </div>
 </div>
 
-<!-- Quill Script -->
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+@endsection
+
+@push('scripts')
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const titleInput = document.getElementById('title');
         const slugInput = document.getElementById('slug');
         
         titleInput.addEventListener('input', function() {
+            if (slugInput.value.trim() !== '') return; // don't overwrite existing slug
             let slug = this.value.toLowerCase()
                 .replace(/[^\w\s-]/g, '')
                 .replace(/[\s_-]+/g, '-')
@@ -202,27 +204,41 @@
             slugInput.value = slug;
         });
 
-        window.quill = new Quill('#blogEditor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'align': [] }],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
-                    ['link', 'video', 'code-block'],
-                    ['clean']
-                ]
+        // Initialize TinyMCE
+        tinymce.init({
+            selector: '#blogEditor',
+            height: 450,
+            menubar: true,
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'wordcount', 'preview'
+            ],
+            toolbar: 'undo redo | blocks | bold italic underline strikethrough | ' +
+                     'forecolor backcolor | alignleft aligncenter alignright alignjustify | ' +
+                     'bullist numlist outdent indent | link image media table | ' +
+                     'code fullscreen preview | removeformat',
+            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 16px; line-height: 1.6; }',
+            image_title: true,
+            automatic_uploads: false,
+            file_picker_types: 'image',
+            file_picker_callback: function(cb, value, meta) {
+                window._tinymceCallback = cb;
+                document.getElementById('mediaTarget').value = 'tinymce';
+                loadMedia();
+                (bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal')) || new bootstrap.Modal(document.getElementById('mediaLibraryModal'))).show();
+            },
+            setup: function(editor) {
+                window.tinymceEditor = editor;
             }
         });
-        
+
         const blogForm = document.getElementById('blogForm');
         blogForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            document.getElementById('blogContentInput').value = window.quill.root.innerHTML;
-            
+
+            tinymce.triggerSave();
+
             const formData = new FormData(this);
             fetch(this.action, {
                 method: 'POST',
@@ -266,8 +282,7 @@
     function openFeaturedImageModal() {
         document.getElementById('mediaTarget').value = 'featured';
         loadMedia();
-        const modal = new bootstrap.Modal(document.getElementById('mediaLibraryModal'));
-        modal.show();
+        (bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal')) || new bootstrap.Modal(document.getElementById('mediaLibraryModal'))).show();
     }
 
     function removeFeaturedImage() {
@@ -277,13 +292,6 @@
         document.getElementById('removeFeaturedImageBtn').classList.add('d-none');
         document.getElementById('setFeaturedImageBtn').classList.remove('d-none');
     }
-
-    document.getElementById('openMediaLibraryBtn').addEventListener('click', function() {
-        document.getElementById('mediaTarget').value = 'tinymce';
-        loadMedia();
-        const modal = new bootstrap.Modal(document.getElementById('mediaLibraryModal'));
-        modal.show();
-    });
 
     const uploadZone = document.getElementById('uploadZone');
     const mediaFileInput = document.getElementById('mediaFileInput');
@@ -332,19 +340,18 @@
     }
 
     function loadMedia(page = 1) {
-        fetch(`{{ route("admin.media.index") }}?page=${page}`, {
+        const search = document.getElementById('mediaSearchInput')?.value || '';
+        fetch(`{{ route("admin.media.index") }}?page=${page}&search=${encodeURIComponent(search)}`, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(res => res.json())
         .then(data => {
             const grid = document.getElementById('mediaGrid');
             grid.innerHTML = '';
-            
             if (data.data.length === 0) {
                 grid.innerHTML = '<div class="col-12 text-center text-muted p-5">No media found. Upload some files!</div>';
                 return;
             }
-            
             data.data.forEach(media => {
                 const url = '/storage/' + media.path;
                 grid.innerHTML += `
@@ -352,8 +359,7 @@
                         <div class="card h-100 media-item" data-url="${url}" data-id="${media.id}" data-alt="${media.alt_text}" style="cursor:pointer;" onclick="selectMedia(this)">
                             <img src="${url}" class="card-img-top object-fit-cover" style="height: 100px;" alt="${media.alt_text}">
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
         });
     }
@@ -361,7 +367,6 @@
     function selectMedia(element) {
         document.querySelectorAll('.media-item').forEach(el => el.classList.remove('border-primary', 'border-3'));
         element.classList.add('border-primary', 'border-3');
-        
         selectedMedia = { url: element.dataset.url, id: element.dataset.id, alt: element.dataset.alt };
         document.getElementById('insertMediaBtn').disabled = false;
     }
@@ -371,8 +376,12 @@
         
         const target = document.getElementById('mediaTarget').value;
         if (target === 'tinymce') {
-            const range = window.quill.getSelection(true);
-            window.quill.insertEmbed(range.index, 'image', selectedMedia.url, Quill.sources.USER);
+            if (window._tinymceCallback) {
+                window._tinymceCallback(selectedMedia.url, { title: selectedMedia.alt });
+                window._tinymceCallback = null;
+            } else {
+                tinymce.activeEditor.insertContent(`<img src="${selectedMedia.url}" alt="${selectedMedia.alt}" style="max-width:100%;">`);
+            }
         } else if (target === 'featured') {
             document.getElementById('featuredImageInput').value = selectedMedia.url;
             document.getElementById('featuredImagePreview').src = selectedMedia.url;
@@ -386,4 +395,4 @@
         document.getElementById('insertMediaBtn').disabled = true;
     });
 </script>
-@endsection
+@endpush

@@ -13,288 +13,163 @@
                 <li class="breadcrumb-item active">Edit</li>
             </ol>
         </nav>
-        <h1>Edit Resource: {{ $resource->title }}</h1>
+        <h1>Edit Resource</h1>
     </div>
 </div>
 
 <form action="{{ route('admin.resources.update', $resource->id) }}" method="POST" id="resourceForm" enctype="multipart/form-data">
     @csrf
     @method('PUT')
-    <div class="row">
-        <!-- Main Content Column -->
-        <div class="col-xl-9 col-lg-8">
-
-            <!-- Basic Info Panel -->
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
             <div class="panel mb-4">
-                <div class="mb-3">
+
+                {{-- Title --}}
+                <div class="mb-4">
                     <label class="form-label fw-bold">Title *</label>
                     <input type="text" name="title" id="title" class="form-control form-control-lg" value="{{ $resource->title }}" required>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Slug *</label>
-                    <input type="text" name="slug" id="slug" class="form-control" value="{{ $resource->slug }}" required>
+                {{-- File Upload --}}
+                <div class="mb-4">
+                    <label class="form-label fw-bold">File</label>
+                    <input type="file" name="file_upload" id="file_upload" class="form-control"
+                           accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.mp4,.mp3">
+                    <small class="text-muted">Max size: 10MB &nbsp;|&nbsp; Leave empty to keep existing file.</small>
+                    @if($resource->file)
+                        <div class="mt-2 d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark text-primary"></i>
+                            <span class="text-muted small">Current:</span>
+                            <a href="{{ $resource->file }}" target="_blank" class="small text-truncate" style="max-width:300px;">
+                                {{ basename($resource->file) }}
+                            </a>
+                        </div>
+                    @endif
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Short Description</label>
-                    <textarea name="short_description" class="form-control" rows="2">{{ $resource->short_description }}</textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Full Description</label>
-                    <input type="hidden" name="description" id="resourceDescriptionInput">
-                    <div id="resourceEditor" style="height: 300px; font-size: 16px;">{!! $resource->description !!}</div>
-                </div>
-            </div>
-
-            <!-- File Attachment Panel -->
-            <div class="panel mb-4">
-                <h5 class="fw-bold mb-3"><i class="bi bi-paperclip me-2"></i>File Attachment</h5>
-                <div class="row">
-                    <div class="col-md-8 mb-3">
-                        <label class="form-label">Upload New File</label>
-                        <input type="file" name="file_upload" id="file_upload" class="form-control"
-                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.mp4,.mp3">
-                        <small class="text-muted">Max size: 10MB. Leave empty to keep existing file.</small>
-                        @if($resource->file)
-                            <div class="mt-2 d-flex align-items-center gap-2">
-                                <i class="bi bi-file-earmark text-primary"></i>
-                                <span class="text-muted small">Current file:</span>
-                                <a href="{{ $resource->file }}" target="_blank" class="small text-truncate" style="max-width:300px;">
-                                    {{ basename($resource->file) }}
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">File Type</label>
-                        <select name="file_type" id="file_type" class="form-select">
-                            <option value="">— Select —</option>
-                            @foreach(['pdf','doc','docx','xls','xlsx','ppt','pptx','zip','mp4','mp3','other'] as $type)
-                                <option value="{{ $type }}" {{ $resource->file_type === $type ? 'selected' : '' }}>{{ strtoupper($type) }}</option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Auto-detected on file select</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SEO Panel -->
-            <div class="panel mb-4">
-                <h5 class="fw-bold mb-3"><i class="bi bi-search me-2"></i>SEO Settings</h5>
-                <div class="mb-3">
-                    <label class="form-label">Meta Title</label>
-                    <input type="text" name="meta_title" class="form-control" value="{{ $resource->meta_title }}" placeholder="Leave blank to use resource title">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Meta Description</label>
-                    <textarea name="meta_description" class="form-control" rows="2">{{ $resource->meta_description }}</textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Meta Keywords</label>
-                    <input type="text" name="meta_keywords" class="form-control" value="{{ $resource->meta_keywords }}" placeholder="e.g. agriculture, farming, guide">
-                    <small class="text-muted">Separate keywords with commas</small>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Sidebar Column -->
-        <div class="col-xl-3 col-lg-4">
-
-            <!-- Publish Panel -->
-            <div class="panel mb-4">
-                <h6 class="fw-bold mb-3 border-bottom pb-2">Publish</h6>
-                <div class="mb-3">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        <option value="1" {{ $resource->status ? 'selected' : '' }}>Active</option>
-                        <option value="0" {{ !$resource->status ? 'selected' : '' }}>Inactive</option>
-                    </select>
-                </div>
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" class="btn btn-outline-secondary" onclick="saveAsInactive()">Save Inactive</button>
-                    <button type="submit" class="btn btn-primary">Update</button>
-                </div>
-            </div>
-
-            <!-- Featured Image Panel -->
-            <div class="panel mb-4">
-                <h6 class="fw-bold mb-3 border-bottom pb-2">Featured Image</h6>
-                <div class="text-center">
-                    <div id="featuredImagePreviewContainer" class="mb-3 {{ $resource->featured_image ? '' : 'd-none' }}">
-                        <img src="{{ $resource->featured_image }}" id="featuredImagePreview" class="img-fluid rounded border" alt="Featured Image">
+                {{-- Image --}}
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Image</label>
+                    <div id="imagePreviewContainer" class="mb-2 {{ $resource->featured_image ? '' : 'd-none' }}">
+                        <img src="{{ $resource->featured_image }}" id="imagePreview" class="img-fluid rounded border" style="max-height: 200px;" alt="Preview">
                     </div>
                     <input type="hidden" name="featured_image" id="featuredImageInput" value="{{ $resource->featured_image }}">
-                    <button type="button" class="btn btn-outline-primary w-100 {{ $resource->featured_image ? 'd-none' : '' }}" id="setFeaturedImageBtn" onclick="openFeaturedImageModal()">
-                        <i class="bi bi-image me-1"></i> Set Featured Image
+                    <button type="button" class="btn btn-outline-primary {{ $resource->featured_image ? 'd-none' : '' }}" id="setImageBtn" onclick="openImageModal()">
+                        <i class="bi bi-image me-1"></i> Select Image
                     </button>
-                    <button type="button" class="btn btn-outline-danger w-100 mt-2 {{ $resource->featured_image ? '' : 'd-none' }}" id="removeFeaturedImageBtn" onclick="removeFeaturedImage()">
-                        Remove Image
+                    <button type="button" class="btn btn-outline-danger ms-2 {{ $resource->featured_image ? '' : 'd-none' }}" id="removeImageBtn" onclick="removeImage()">
+                        Remove
                     </button>
                 </div>
-            </div>
 
+                {{-- Actions --}}
+                <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                    <a href="{{ route('admin.resources.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-5">
+                        <i class="bi bi-save me-1"></i> Update Resource
+                    </button>
+                </div>
+
+            </div>
         </div>
     </div>
 </form>
 
-<!-- Media Library Modal -->
+{{-- Media Library Modal --}}
 <div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-primary text-white" style="border-bottom: none;">
-                <h5 class="modal-title fw-bold">Media Library</h5>
+                <h5 class="modal-title fw-bold">Select Image</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0" style="min-height: 500px;">
                 <ul class="nav nav-tabs px-3 pt-3 border-bottom-0" id="mediaTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-bold border-0" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-panel" type="button" role="tab">Upload Files</button>
+                        <button class="nav-link fw-bold border-0" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-panel" type="button" role="tab">Upload</button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active fw-bold border-0" id="library-tab" data-bs-toggle="tab" data-bs-target="#library-panel" type="button" role="tab" onclick="loadMedia()">Media Library</button>
                     </li>
                 </ul>
-                <div class="tab-content border-top border-secondary-subtle" id="mediaTabsContent" style="padding: 20px; min-height: 450px;">
+                <div class="tab-content border-top border-secondary-subtle p-4" style="min-height: 450px;">
                     <div class="tab-pane fade" id="upload-panel" role="tabpanel">
                         <div class="border border-2 border-dashed rounded text-center p-5 border-primary" id="uploadZone" style="cursor:pointer;">
                             <i class="bi bi-cloud-arrow-up fs-1 text-primary"></i>
-                            <h4 class="mt-3 text-dark fw-bold">Drop files here or click to upload</h4>
-                            <p class="text-muted">Maximum upload file size: 5 MB.</p>
+                            <h5 class="mt-3 fw-bold">Drop image here or click to upload</h5>
+                            <p class="text-muted small">JPG, PNG, WebP — Max 5MB</p>
                             <input type="file" id="mediaFileInput" class="d-none" accept="image/jpeg,image/png,image/gif,image/webp">
                         </div>
-                        <div id="uploadProgress" class="progress mt-3 d-none" style="height: 10px;">
+                        <div id="uploadProgress" class="progress mt-3 d-none" style="height: 8px;">
                             <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;"></div>
                         </div>
                     </div>
                     <div class="tab-pane fade show active" id="library-panel" role="tabpanel">
+                        <div class="mb-3">
+                            <input type="text" id="mediaSearchInput" class="form-control" placeholder="Search by title or keyword..." oninput="loadMedia(1)">
+                        </div>
                         <div class="row g-2" id="mediaGrid">
                             <div class="col-12 text-center text-muted p-5">Loading media...</div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-top-0 pt-3 pb-4 px-4">
-                <input type="hidden" id="mediaTarget" value="">
+            <div class="modal-footer border-top-0 pb-4 px-4">
                 <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary px-4" id="insertMediaBtn" disabled>Insert Selected Image</button>
+                <button type="button" class="btn btn-primary px-4" id="insertMediaBtn" disabled>Use Selected Image</button>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Quill Editor -->
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 @endsection
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-
-        // Auto-generate slug from title
-        document.getElementById('title').addEventListener('input', function () {
-            let slug = this.value.toLowerCase()
-                .replace(/[^\w\s-]/g, '')
-                .replace(/[\s_-]+/g, '-')
-                .replace(/^-+|-+$/g, '');
-            document.getElementById('slug').value = slug;
-        });
-
-        // Auto-detect file type from uploaded file extension
-        document.getElementById('file_upload').addEventListener('change', function () {
-            const file = this.files[0];
-            if (!file) return;
-            const ext = file.name.split('.').pop().toLowerCase();
-            const typeSelect = document.getElementById('file_type');
-            const options = Array.from(typeSelect.options).map(o => o.value);
-            typeSelect.value = options.includes(ext) ? ext : 'other';
-        });
-
-        // Initialize Quill
-        window.quill = new Quill('#resourceEditor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'align': [] }],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                    ['link', 'code-block'],
-                    ['clean']
-                ]
-            }
-        });
-
-        // AJAX form submit
-        document.getElementById('resourceForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            document.getElementById('resourceDescriptionInput').value = window.quill.root.innerHTML;
-
-            const formData = new FormData(this);
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Resource updated successfully!',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.href = '{{ route("admin.resources.index") }}';
-                    });
-                } else {
-                    Swal.fire('Error', 'Error updating resource.', 'error');
-                }
-            })
-            .catch(() => Swal.fire('Error', 'An error occurred.', 'error'));
-        });
-    });
-
-    function saveAsInactive() {
-        document.querySelector('select[name="status"]').value = '0';
-        document.getElementById('resourceForm').dispatchEvent(new Event('submit'));
-    }
-
-    function openFeaturedImageModal() {
-        document.getElementById('mediaTarget').value = 'featured';
-        loadMedia();
-        new bootstrap.Modal(document.getElementById('mediaLibraryModal')).show();
-    }
-
-    function removeFeaturedImage() {
-        document.getElementById('featuredImageInput').value = '';
-        document.getElementById('featuredImagePreview').src = '';
-        document.getElementById('featuredImagePreviewContainer').classList.add('d-none');
-        document.getElementById('removeFeaturedImageBtn').classList.add('d-none');
-        document.getElementById('setFeaturedImageBtn').classList.remove('d-none');
-    }
-
     let selectedMedia = null;
 
+    function openImageModal() {
+        selectedMedia = null;
+        document.getElementById('insertMediaBtn').disabled = true;
+        loadMedia();
+        (bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal')) || new bootstrap.Modal(document.getElementById('mediaLibraryModal'))).show();
+    }
+
+    function removeImage() {
+        document.getElementById('featuredImageInput').value = '';
+        document.getElementById('imagePreview').src = '';
+        document.getElementById('imagePreviewContainer').classList.add('d-none');
+        document.getElementById('removeImageBtn').classList.add('d-none');
+        document.getElementById('setImageBtn').classList.remove('d-none');
+    }
+
+    // Form submit
+    document.getElementById('resourceForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({ icon: 'success', title: 'Updated!', text: 'Resource updated successfully.', timer: 1500, showConfirmButton: false })
+                .then(() => window.location.href = '{{ route("admin.resources.index") }}');
+            } else {
+                Swal.fire('Error', 'Could not update resource.', 'error');
+            }
+        })
+        .catch(() => Swal.fire('Error', 'An error occurred.', 'error'));
+    });
+
+    // Media Library
     const uploadZone = document.getElementById('uploadZone');
     const mediaFileInput = document.getElementById('mediaFileInput');
     uploadZone.addEventListener('click', () => mediaFileInput.click());
-    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('bg-secondary', 'text-white'); });
-    uploadZone.addEventListener('dragleave', e => { e.preventDefault(); uploadZone.classList.remove('bg-secondary', 'text-white'); });
-    uploadZone.addEventListener('drop', e => {
-        e.preventDefault();
-        uploadZone.classList.remove('bg-secondary', 'text-white');
-        if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
-    });
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('bg-light'); });
+    uploadZone.addEventListener('dragleave', e => { e.preventDefault(); uploadZone.classList.remove('bg-light'); });
+    uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('bg-light'); if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]); });
     mediaFileInput.addEventListener('change', function () { if (this.files.length) uploadFile(this.files[0]); });
 
     function uploadFile(file) {
@@ -309,7 +184,7 @@
         xhr.upload.onprogress = e => { if (e.lengthComputable) progressBar.style.width = ((e.loaded / e.total) * 100) + '%'; };
         xhr.onload = function () {
             if (xhr.status === 200) { document.getElementById('library-tab').click(); loadMedia(); }
-            else Swal.fire('Upload Failed', xhr.responseText, 'error');
+            else Swal.fire('Upload Failed', 'Could not upload file.', 'error');
             document.getElementById('uploadProgress').classList.add('d-none');
             progressBar.style.width = '0%';
         };
@@ -317,7 +192,8 @@
     }
 
     function loadMedia(page = 1) {
-        fetch(`{{ route("admin.media.index") }}?page=${page}`, {
+        const search = document.getElementById('mediaSearchInput')?.value || '';
+        fetch(`{{ route("admin.media.index") }}?page=${page}&search=${encodeURIComponent(search)}`, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(res => res.json())
@@ -332,8 +208,8 @@
                 const url = '/storage/' + media.path;
                 grid.innerHTML += `
                     <div class="col-md-2 col-sm-3 col-4 mb-2">
-                        <div class="card h-100 media-item" data-url="${url}" data-id="${media.id}" data-alt="${media.alt_text}" style="cursor:pointer;" onclick="selectMedia(this)">
-                            <img src="${url}" class="card-img-top object-fit-cover" style="height: 100px;" alt="${media.alt_text}">
+                        <div class="card h-100 media-item border-2" data-url="${url}" style="cursor:pointer;" onclick="selectMedia(this)">
+                            <img src="${url}" class="card-img-top object-fit-cover" style="height:100px;" alt="">
                         </div>
                     </div>`;
             });
@@ -341,19 +217,19 @@
     }
 
     function selectMedia(element) {
-        document.querySelectorAll('.media-item').forEach(el => el.classList.remove('border-primary', 'border-3'));
-        element.classList.add('border-primary', 'border-3');
-        selectedMedia = { url: element.dataset.url, id: element.dataset.id, alt: element.dataset.alt };
+        document.querySelectorAll('.media-item').forEach(el => el.classList.remove('border-primary'));
+        element.classList.add('border-primary');
+        selectedMedia = element.dataset.url;
         document.getElementById('insertMediaBtn').disabled = false;
     }
 
     document.getElementById('insertMediaBtn').addEventListener('click', function () {
         if (!selectedMedia) return;
-        document.getElementById('featuredImageInput').value = selectedMedia.url;
-        document.getElementById('featuredImagePreview').src = selectedMedia.url;
-        document.getElementById('featuredImagePreviewContainer').classList.remove('d-none');
-        document.getElementById('setFeaturedImageBtn').classList.add('d-none');
-        document.getElementById('removeFeaturedImageBtn').classList.remove('d-none');
+        document.getElementById('featuredImageInput').value = selectedMedia;
+        document.getElementById('imagePreview').src = selectedMedia;
+        document.getElementById('imagePreviewContainer').classList.remove('d-none');
+        document.getElementById('setImageBtn').classList.add('d-none');
+        document.getElementById('removeImageBtn').classList.remove('d-none');
         bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal')).hide();
         selectedMedia = null;
         document.getElementById('insertMediaBtn').disabled = true;

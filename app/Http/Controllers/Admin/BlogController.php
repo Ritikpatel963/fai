@@ -59,15 +59,13 @@ class BlogController extends Controller
             $blog->tags()->sync($request->tags);
         }
 
-        if ($request->filled('seo_title') || $request->filled('seo_description') || $request->filled('seo_keywords')) {
-            $blog->seo()->create([
-                'meta_title' => $request->seo_title,
-                'meta_description' => $request->seo_description,
-                'focus_keyword' => $request->seo_keywords,
-            ]);
-        }
+        $blog->seo()->create([
+            'meta_title' => $request->seo_title,
+            'meta_description' => $request->seo_description,
+            'focus_keyword' => $request->seo_keywords,
+        ]);
 
-        return response()->json(['success' => true, 'blog' => $blog, 'redirect' => route('admin.blogs.index')]);
+        return response()->json(['success' => true, 'redirect' => route('admin.blogs.index')]);
     }
 
     public function edit(Blog $blog)
@@ -104,16 +102,14 @@ class BlogController extends Controller
             $blog->tags()->sync($request->tags);
         }
 
-        if ($request->filled('seo_title') || $request->filled('seo_description') || $request->filled('seo_keywords')) {
-            $blog->seo()->updateOrCreate(
-                ['blog_id' => $blog->id],
-                [
-                    'meta_title' => $request->seo_title,
-                    'meta_description' => $request->seo_description,
-                    'focus_keyword' => $request->seo_keywords,
-                ]
-            );
-        }
+        $blog->seo()->updateOrCreate(
+            ['blog_id' => $blog->id],
+            [
+                'meta_title' => $request->seo_title,
+                'meta_description' => $request->seo_description,
+                'focus_keyword' => $request->seo_keywords,
+            ]
+        );
 
         return response()->json(['success' => true]);
     }

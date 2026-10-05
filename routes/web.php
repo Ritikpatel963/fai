@@ -6,10 +6,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 Auth::routes(['register' => false]);
 Route::get('admin', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('admin.login');
 
@@ -25,6 +21,9 @@ Route::prefix('admin')
         Route::get('/profile', [App\Http\Controllers\Admin\ProfileController::class, 'index'])->name('profile.index');
         Route::post('/profile/change-password', [App\Http\Controllers\Admin\ProfileController::class, 'changePassword'])->name('profile.change-password');
         
+        // Testimonials
+        Route::resource('testimonials', App\Http\Controllers\Admin\TestimonialController::class)->except(['create', 'edit']);
+
         // Contact Leads
         Route::resource('contact-leads', App\Http\Controllers\Admin\ContactLeadController::class)->only(['index', 'show', 'update', 'destroy']);
 
@@ -43,4 +42,8 @@ Route::prefix('admin')
         Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings/header', [App\Http\Controllers\Admin\SettingController::class, 'saveHeader'])->name('settings.header');
         Route::post('/settings/footer', [App\Http\Controllers\Admin\SettingController::class, 'saveFooter'])->name('settings.footer');
+
+        // SEO Settings
+        Route::get('/seo-settings', [App\Http\Controllers\Admin\SeoSettingController::class, 'index'])->name('seo-settings.index');
+        Route::post('/seo-settings/save', [App\Http\Controllers\Admin\SeoSettingController::class, 'save'])->name('seo-settings.save');
     });
