@@ -4,7 +4,117 @@ All changes made to this project are documented here in reverse chronological or
 
 ---
 
-## [2026-09-28] — Blog Feature Fixes & Improvements
+## 📦 Modules Created
+
+A quick reference of all modules built from scratch during this project.
+
+---
+
+### Module 1 — Resources
+**Status:** ✅ Complete  
+**URL:** `/admin/resources`
+
+| Item | Details |
+|---|---|
+| Migration | `create_resources_table` — title, slug, description, file, file_type, status, featured_image, SEO fields, softDeletes |
+| Model | `app/Models/Resource.php` — SoftDeletes, fillable, casts |
+| Controller | `app/Http/Controllers/Admin/ResourceController.php` — full CRUD |
+| Routes | `Route::resource('resources', ...)` — 7 routes |
+| Views | `resources/views/admin/resources/` — index, create, edit |
+| Features | File upload (PDF/DOC/DOCX/XLS/XLSX/PPT/PPTX/ZIP/MP4/MP3, max 10MB), featured image via media library, auto-generated slug, Add via popup modal on index page |
+
+---
+
+### Module 2 — Contact Leads
+**Status:** ✅ Complete  
+**URL:** `/admin/contact-leads`
+
+| Item | Details |
+|---|---|
+| Migration | `create_contact_leads_table` — name, email, phone, company, subject, message, source, status, notes, softDeletes |
+| Model | `app/Models/ContactLead.php` — SoftDeletes, fillable |
+| Controller | `app/Http/Controllers/Admin/ContactLeadController.php` — index, show, update, destroy |
+| Routes | `Route::resource('contact-leads')->only([index, show, update, destroy])` — 4 routes |
+| Views | `resources/views/admin/contact_leads/` — index, show |
+| Features | Read-only inbox (leads come from frontend), status counts badge row (new/contacted/in_progress/converted/closed), status + notes update on show page, soft delete |
+
+---
+
+### Module 3 — Site Settings
+**Status:** ✅ Complete  
+**URL:** `/admin/settings`
+
+| Item | Details |
+|---|---|
+| Migration | `create_settings_table` — key-value store (key, value, type, group) |
+| Model | `app/Models/Setting.php` — fillable, get/set/getGroup helpers |
+| Controller | `app/Http/Controllers/Admin/SettingController.php` — index, saveHeader, saveFooter |
+| Routes | `GET /admin/settings`, `POST /admin/settings/header`, `POST /admin/settings/footer` |
+| Views | `resources/views/admin/settings/index.blade.php` |
+| Features | Header logo with media library picker and preview, footer logo + short description (char counter) + email + phone + 5 social links (Facebook/Instagram/Twitter/YouTube/LinkedIn), frontend + backend validation, AJAX save with inline errors and spinner |
+
+---
+
+### Module 4 — SEO Settings
+**Status:** ✅ Complete  
+**URL:** `/admin/seo-settings`
+
+| Item | Details |
+|---|---|
+| Migration | `create_seo_settings_table` — page, route_name (unique), meta_title, meta_description, meta_keywords, og_title, og_description, og_image, canonical_url, robots, schema_markup |
+| Model | `app/Models/SeoSetting.php` — fillable, forPage(), savePage() helpers |
+| Controller | `app/Http/Controllers/Admin/SeoSettingController.php` — index, save |
+| Routes | `GET /admin/seo-settings`, `POST /admin/seo-settings/save` |
+| Views | `resources/views/admin/seo_settings/index.blade.php` |
+| Pages covered | Home, About Us, Our Projects, Resources, Blogs Listing, Contact Us |
+| Features | Bootstrap accordion — one panel per page, each saves independently via AJAX, status badge (Configured/Not set), Basic Meta (title/description/keywords/canonical), Open Graph (og_title/og_description/og_image with media picker), inline errors, toast notifications |
+| Removed fields | Robots meta tag, Schema Markup (removed per instruction) |
+
+---
+
+### Module 5 — Testimonials
+**Status:** ✅ Complete  
+**URL:** `/admin/testimonials`
+
+| Item | Details |
+|---|---|
+| Migration | `create_testimonials_table` — name, rating (1–5), message, image, order, status, softDeletes |
+| Model | `app/Models/Testimonial.php` — SoftDeletes, fillable, casts |
+| Controller | `app/Http/Controllers/Admin/TestimonialController.php` — index, store, show, update, destroy |
+| Routes | `Route::resource('testimonials')->except([create, edit])` — 5 routes |
+| Views | `resources/views/admin/testimonials/index.blade.php` |
+| Features | DataTables with pagination/search/sorting, Add + Edit via popup modal (no page reload), interactive star rating (1–5) with hover effect, circular photo picker from media library, char counter on message, display order input, inline error display, soft delete |
+
+---
+
+## 📋 Existing Modules Fixed / Improved
+
+### Blogs
+- Fixed SEO field name mismatch (`meta_title`/`meta_description`)
+- Fixed status badge always showing "Published"
+- Fixed N+1 query on blog list
+- Fixed `published_at` not updating on status change
+- Added Meta Keywords field to SEO panel
+- Replaced Quill editor with TinyMCE 6
+- Removed Visibility dropdown
+
+### Profile
+- Added show/hide password toggle on Change Password form
+
+### Auth
+- Forgot password shows reset link directly on page (no email service needed)
+
+### Media Library
+- Improved search bar UI (labels, clear button, live search on keystroke)
+- Added search inside media modal across all pages that use it (blogs, resources, settings, testimonials, SEO)
+
+### Header/Navigation
+- Added Profile link to user dropdown
+- "Signed in as Admin" now shows actual logged-in user name
+
+---
+
+
 
 ### 1. SEO Field Name Bug Fix (Critical)
 **Files changed:**
@@ -454,5 +564,260 @@ File uploads require `enctype="multipart/form-data"` on the form tag. Without it
 
 **Bug 3 — Storage facade not imported (Backend):**
 Was using `\Storage::` with full namespace. Added proper `use Illuminate\Support\Facades\Storage` import at the top of ResourceController.
+
+---
+
+## [2026-10-01] — Blog Editor Upgrade
+
+### 31. Replaced Quill with TinyMCE on Blog Create and Edit Pages
+**Files changed:**
+- `resources/views/admin/blogs/create.blade.php`
+- `resources/views/admin/blogs/edit.blade.php`
+
+**Change:**
+Replaced the Quill.js rich text editor with TinyMCE 6 (CDN version) on both blog create and edit pages.
+
+**Why TinyMCE is better here:**
+- Full word-processor style toolbar (tables, media embed, find/replace, word count, preview, fullscreen)
+- Uses a native `<textarea>` — no hidden input needed, no manual content sync on submit
+- `tinymce.triggerSave()` on form submit syncs content automatically
+- Built-in image picker integration via `file_picker_callback` — opens our custom media library modal
+- Existing blog content pre-populates correctly via Blade `{!! $blog->content !!}`
+
+**What changed structurally:**
+- Removed `<div id="blogEditor">` and `<input type="hidden" name="content">` — replaced with `<textarea name="content" id="blogEditor">`
+- Removed "Add Media" button above editor — TinyMCE has its own Image button in toolbar
+- Removed Quill CSS/JS CDN links
+- Added TinyMCE CDN script
+- Form submit now calls `tinymce.triggerSave()` instead of manually syncing Quill HTML
+
+---
+
+## [2026-10-01] — Resources Simplified
+
+### 32. Simplified Resources Create & Edit Forms
+**Files changed:**
+- `resources/views/admin/resources/create.blade.php`
+- `resources/views/admin/resources/edit.blade.php`
+- `app/Http/Controllers/Admin/ResourceController.php`
+
+**Change:**
+Stripped the resource forms down to just 3 fields:
+- **Title** — required
+- **File** — upload input (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP, MP4, MP3, max 10MB)
+- **Image** — single image via media library with preview and remove button
+
+Removed: slug input (now auto-generated from title), short description, full description (Quill editor), file type dropdown (now auto-detected from extension), SEO panel, status dropdown (always active on create).
+
+Controller changes:
+- `store()` — validation simplified to title + file_upload only. Slug auto-generated using `Str::slug()` with duplicate handling. File type auto-detected from extension.
+- `update()` — same simplification. Slug regenerated from title on update.
+
+---
+
+## [2026-10-01] — Session Bug Fixes
+
+### 33. Fixed Blog Create & Edit — TinyMCE Scripts in Wrong Section
+**Files changed:**
+- `resources/views/admin/blogs/create.blade.php`
+- `resources/views/admin/blogs/edit.blade.php`
+
+TinyMCE CDN script and all JS were inside `@section('content')` instead of `@push('scripts')` / `@endpush`. Moved correctly so scripts render at the bottom of the page as the layout expects.
+
+---
+
+### 34. Fixed ResourceController update() — Duplicate Slug on Title Change
+**File changed:** `app/Http/Controllers/Admin/ResourceController.php`
+
+`update()` was regenerating the slug with `Str::slug($request->title)` without excluding the current resource from the uniqueness check. If another resource had the same slug, the DB unique constraint would throw an error. Fixed by adding the same duplicate-handling loop used in `store()`, but excluding the current resource ID with `where('id', '!=', $resource->id)`.
+
+---
+
+## [2026-10-01] — Media Library Modal Search
+
+### 35. Added Image Search to Media Library Modal
+**Files changed:**
+- `resources/views/admin/blogs/create.blade.php`
+- `resources/views/admin/blogs/edit.blade.php`
+- `resources/views/admin/resources/create.blade.php`
+- `resources/views/admin/resources/edit.blade.php`
+- `resources/views/admin/settings/index.blade.php`
+
+**Change:**
+Added a search input box inside the Media Library tab of the modal in all 5 files that use it. Typing in the search box triggers `loadMedia(1)` on every keystroke (`oninput`), passing the search term as a `?search=` query parameter to `admin.media.index`. The `MediaController@index` already supported search filtering on `title`, `original_filename`, and `keywords` — no backend changes needed.
+
+---
+
+## [2026-10-01] — Resources Add via Popup Modal
+
+### 36. Add Resource via Popup Modal (No Page Reload)
+**File changed:** `resources/views/admin/resources/index.blade.php`
+
+**Change:**
+The "Add Resource" button no longer navigates to a separate page. It now opens a Bootstrap modal popup directly on the Resources list page.
+
+**What's in the modal:**
+- Title input (required)
+- File upload input (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP, MP4, MP3 — max 10MB)
+- Image selector with preview (opens nested Media Library modal)
+- Cancel and Save buttons
+
+**How it works:**
+- Form submits via AJAX `fetch()` — no page reload during save
+- On success shows SweetAlert confirmation then reloads the table
+- Media Library modal has a Back button to return to the resource modal after selecting an image
+- Search functionality included in the media library tab
+- Image upload inside media library modal uses XHR with progress bar
+
+**No backend changes needed** — the existing `ResourceController@store` already handles AJAX JSON responses correctly.
+
+---
+
+## [2026-10-01] — Loose Ends Fixed
+
+### 37. Fixed Loose Ends Across Session Files
+
+**`resources/views/admin/resources/index.blade.php`**
+- Fixed duplicate Bootstrap Modal instances — changed all `new bootstrap.Modal(el).show()` calls to `bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el)` pattern. This prevents Bootstrap 5 from creating multiple instances on the same element which causes warnings and improper close behavior. Applied to `openAddResourceModal()`, `openModalImagePicker()`, Back button, and Insert button handlers.
+
+**`resources/views/admin/media/index.blade.php`**
+- Fixed `editModal` being initialized outside `DOMContentLoaded`. `new bootstrap.Modal(document.getElementById('editMediaModal'))` was running at script parse time before the DOM element existed, which could cause a null reference error on slower connections. Moved inside a second `DOMContentLoaded` listener.
+
+**`resources/views/admin/blogs/create.blade.php` and `edit.blade.php`**
+- Confirmed TinyMCE CDN script placement is correct — outside `@section('content')`, before `@push('scripts')`. No changes needed.
+
+---
+
+## [2026-10-01] — SEO for Pages Module
+
+### 38. SeoSetting Model Fixed
+**File changed:** `app/Models/SeoSetting.php`
+
+The model was an empty stub. Added:
+- `$fillable` — all 11 columns: page, route_name, meta_title, meta_description, meta_keywords, og_title, og_description, og_image, canonical_url, robots, schema_markup
+- `forPage(routeName)` — static helper to fetch a single page's SEO record by route_name
+- `savePage(routeName, page, data)` — static helper to upsert a page's SEO record
+
+---
+
+### 39. SeoSettingController Created
+**File created:** `app/Http/Controllers/Admin/SeoSettingController.php`
+
+Two methods:
+- `index()` — loads all 6 page SEO records from DB keyed by route_name, passes `$pages` array and `$settings` collection to view
+- `save(Request $request)` — validates all fields (meta_title max 255, meta_description max 500, canonical_url URL format, robots enum), upserts record via `SeoSetting::savePage()`, returns AJAX JSON response
+
+Pages managed: Home, About Us, Our Projects, Resources, Blogs Listing, Contact Us — stored as `route_name` values: home, about-us, our-projects, resources, blogs-listing, contact-us.
+
+---
+
+### 40. SEO Settings Routes Registered
+**File changed:** `routes/web.php`
+
+Two routes added inside admin auth group:
+- `GET  /admin/seo-settings` → `SeoSettingController@index` (admin.seo-settings.index)
+- `POST /admin/seo-settings/save` → `SeoSettingController@save` (admin.seo-settings.save)
+
+Route name `admin.seo-settings.index` matches the existing sidebar entry exactly — the sidebar link was already pointing to this route and was rendering as `href="#"` before. Now it resolves correctly.
+
+---
+
+### 41. SEO Settings View Created
+**File created:** `resources/views/admin/seo_settings/index.blade.php`
+
+Single page with Bootstrap accordion — 6 collapsible panels, one per page. First panel (Home) is open by default.
+
+Each panel contains:
+- **Status badge** — shows "Configured" (green) if meta_title is set, "Not set" (grey) if empty. Updates live after saving.
+- **Basic Meta section** — Meta Title (with char count), Meta Description, Meta Keywords, Canonical URL, Robots dropdown (index/follow, noindex/nofollow options)
+- **Open Graph section** — OG Title, OG Description, OG Image (with Browse button opening integrated media library modal with search and upload)
+- **Schema Markup section** — monospace JSON-LD textarea
+- **Save button** — each panel saves independently via AJAX `fetch()`. Shows spinner during save. Displays inline field errors from backend 422 responses. Shows toast notification on success.
+
+Dedicated media library modal (`#seoMediaModal`) — separate from other page modals to avoid ID conflicts. Includes search, upload with progress bar, and grid selection.
+
+---
+
+### 42. SEO Settings Seed Data
+6 default rows seeded into `seo_settings` table via SQL (one per page):
+- home, about-us, our-projects, resources, blogs-listing, contact-us
+- Each has sensible default meta_title, meta_description, meta_keywords
+- All robots set to `index, follow`
+- OG fields and schema_markup left NULL for admin to fill via UI
+
+---
+
+## [2026-10-01] — Testimonials Module
+
+### 43. Testimonials Migration Created
+**File created:** `database/migrations/2026_10_01_000001_create_testimonials_table.php`
+
+Table: `testimonials`
+
+| Column | Type | Notes |
+|---|---|---|
+| id | bigIncrements | PK |
+| name | string | required |
+| rating | unsignedTinyInteger | 1–5, default 5 |
+| message | text | required |
+| image | string | nullable, from media library |
+| order | unsignedInteger | default 0, lower = shown first |
+| status | boolean | default true |
+| deleted_at | softDeletes | nullable |
+| timestamps | | created_at, updated_at |
+
+---
+
+### 44. Testimonial Model Created
+**File created:** `app/Models/Testimonial.php`
+
+- `SoftDeletes` + `HasFactory` traits
+- `$fillable` — name, rating, message, image, order, status
+- `$casts` — rating/order as integer, status as boolean
+
+---
+
+### 45. TestimonialController Created
+**File created:** `app/Http/Controllers/Admin/TestimonialController.php`
+
+Five methods:
+- `index()` — paginated list (20/page), ordered by `order` then `created_at` desc
+- `store()` — validates all fields (name required, rating 1–5, message required, image nullable URL, order integer, status in:0,1), creates record, returns AJAX JSON
+- `show()` — returns single testimonial as JSON for populating edit modal
+- `update()` — same validation as store, updates record, returns AJAX JSON
+- `destroy()` — soft deletes record, returns AJAX JSON
+
+---
+
+### 46. Testimonial Route Registered + Sidebar Link Added
+**Files changed:** `routes/web.php`, `resources/views/admin/layouts/partials/sidebar.blade.php`
+
+- `Route::resource('testimonials', TestimonialController::class)->except(['create', 'edit'])` — 5 routes registered (index, store, show, update, destroy)
+- Sidebar entry added with `bi-chat-quote` icon between Site Settings and SEO Settings
+
+---
+
+### 47. Testimonials View Created
+**File created:** `resources/views/admin/testimonials/index.blade.php`
+
+**Table columns:** Order, Name, Star Rating (visual), Message preview (60 chars), Circular image thumbnail, Status badge, Edit/Delete actions
+
+**Add/Edit Modal (single form, handles both create and update):**
+- Circular photo picker (90×90px) with person placeholder icon and Remove button
+- Interactive star rating (1–5) with hover highlight effect and label (Poor/Fair/Good/Very Good/Excellent)
+- Message textarea with live character counter (max 2000)
+- Display Order input (lower = shown first)
+- Status dropdown (Active/Inactive)
+- Spinner on save button, inline error display from backend 422 responses
+- `_method=PUT` appended via FormData for updates
+
+**Media Library Modal (separate, `tm` prefix to avoid ID conflicts):**
+- Upload tab with drag-and-drop and progress bar
+- Library tab with search and grid selection
+- Back button returns to testimonial modal
+- Use Selected Photo inserts image and returns to testimonial modal
+
+### 48. Migration Executed
+`php artisan migrate` — `create_testimonials_table` ran successfully (131ms).
 
 ---

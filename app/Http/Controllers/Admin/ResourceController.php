@@ -33,12 +33,16 @@ class ResourceController extends Controller
     {
         $request->validate([
             'title'       => 'required|string|max:255',
-            'slug'        => 'required|string|max:255|unique:resources',
-            'status'      => 'required|in:0,1',
-            'description' => 'nullable|string',
-            'file_type'   => 'nullable|string|max:50',
             'file_upload' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,mp4,mp3',
         ]);
+
+        // Auto generate slug from title
+        $slug = \Illuminate\Support\Str::slug($request->title);
+        $originalSlug = $slug;
+        $count = 1;
+        while (\App\Models\Resource::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $count++;
+        }
 
         // Handle file upload
         $filePath = null;
@@ -53,18 +57,13 @@ class ResourceController extends Controller
         }
 
         Resource::create([
-            'title'             => $request->title,
-            'slug'              => $request->slug,
-            'short_description' => $request->short_description,
-            'description'       => $request->description,
-            'featured_image'    => $request->featured_image,
-            'file'              => $filePath,
-            'file_type'         => $request->file_type,
-            'status'            => $request->status,
-            'published_at'      => $request->status ? now() : null,
-            'meta_title'        => $request->meta_title,
-            'meta_description'  => $request->meta_description,
-            'meta_keywords'     => $request->meta_keywords,
+            'title'          => $request->title,
+            'slug'           => $slug,
+            'featured_image' => $request->featured_image,
+            'file'           => $filePath,
+            'file_type'      => $filePath ? strtolower(pathinfo($filePath, PATHINFO_EXTENSION)) : null,
+            'status'         => 1,
+            'published_at'   => now(),
         ]);
 
         return response()->json([
@@ -96,16 +95,21 @@ class ResourceController extends Controller
     {
         $request->validate([
             'title'       => 'required|string|max:255',
-            'slug'        => 'required|string|max:255|unique:resources,slug,' . $resource->id,
-            'status'      => 'required|in:0,1',
-            'description' => 'nullable|string',
-            'file_type'   => 'nullable|string|max:50',
             'file_upload' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,mp4,mp3',
         ]);
 
         // Handle file upload — keep existing if no new file uploaded
         $filePath = $resource->file;
+        $fileType = $resource->file_type;
         if ($request->hasFile('file_upload')) {
+            // Delete old file from disk if it exists
+            if ($resource->file) {
+                $oldPath = ltrim(str_replace('/storage/', '', $resource->file), '/');
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            }
+
             $file = $request->file('file_upload');
             $filename = uniqid('resource_') . '.' . $file->getClientOriginalExtension();
             if (!Storage::disk('public')->exists('resources')) {
@@ -113,21 +117,23 @@ class ResourceController extends Controller
             }
             $file->storeAs('public/resources', $filename);
             $filePath = '/storage/resources/' . $filename;
+            $fileType = strtolower($file->getClientOriginalExtension());
+        }
+
+        // Regenerate slug from title — ensure uniqueness excluding current record
+        $slug = \Illuminate\Support\Str::slug($request->title);
+        $originalSlug = $slug;
+        $count = 1;
+        while (\App\Models\Resource::where('slug', $slug)->where('id', '!=', $resource->id)->exists()) {
+            $slug = $originalSlug . '-' . $count++;
         }
 
         $resource->update([
-            'title'             => $request->title,
-            'slug'              => $request->slug,
-            'short_description' => $request->short_description,
-            'description'       => $request->description,
-            'featured_image'    => $request->featured_image,
-            'file'              => $filePath,
-            'file_type'         => $request->file_type,
-            'status'            => $request->status,
-            'published_at'      => $request->status ? ($resource->published_at ?? now()) : null,
-            'meta_title'        => $request->meta_title,
-            'meta_description'  => $request->meta_description,
-            'meta_keywords'     => $request->meta_keywords,
+            'title'          => $request->title,
+            'slug'           => $slug,
+            'featured_image' => $request->featured_image,
+            'file'           => $filePath,
+            'file_type'      => $fileType,
         ]);
 
         return response()->json(['success' => true]);

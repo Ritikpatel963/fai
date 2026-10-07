@@ -18,21 +18,37 @@
 
 <section class="panel">
     <!-- Filters -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
+    <div class="row g-3 align-items-end mb-4">
+        <div class="col-lg-5 col-md-6">
+            <label class="form-label text-muted small fw-semibold mb-1">Search</label>
             <div class="input-group">
-                <span class="input-group-text border-0"><i class="bi bi-search"></i></span>
-                <input type="text" id="searchMedia" class="form-control border-0" placeholder="Search by title, keyword...">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text"
+                       id="searchMedia"
+                       class="form-control border-start-0 ps-0"
+                       placeholder="Search by title, keyword..."
+                       style="box-shadow:none;">
+                <button class="btn btn-outline-secondary border-start-0" type="button"
+                        onclick="document.getElementById('searchMedia').value=''; loadMediaLibrary(1);"
+                        title="Clear search">
+                    <i class="bi bi-x"></i>
+                </button>
             </div>
         </div>
-        <div class="col-md-3">
-            <input type="date" id="startDate" class="form-control border-0" title="Start Date">
+        <div class="col-lg-3 col-md-6">
+            <label class="form-label text-muted small fw-semibold mb-1">From Date</label>
+            <input type="date" id="startDate" class="form-control" title="Start Date">
         </div>
-        <div class="col-md-3">
-            <input type="date" id="endDate" class="form-control border-0" title="End Date">
+        <div class="col-lg-3 col-md-6">
+            <label class="form-label text-muted small fw-semibold mb-1">To Date</label>
+            <input type="date" id="endDate" class="form-control" title="End Date">
         </div>
-        <div class="col-md-2 text-end">
-            <button class="btn btn-primary w-100" onclick="loadMediaLibrary(1)">Filter</button>
+        <div class="col-lg-1 col-md-6">
+            <button class="btn btn-primary w-100" onclick="loadMediaLibrary(1)" title="Apply Filter">
+                <i class="bi bi-funnel-fill"></i>
+            </button>
         </div>
     </div>
 
@@ -159,14 +175,16 @@
     document.addEventListener('DOMContentLoaded', () => {
         loadMediaLibrary(1);
 
-        document.getElementById('searchMedia').addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                loadMediaLibrary(1);
-            }
+        document.getElementById('searchMedia').addEventListener('input', function() {
+            clearTimeout(this._searchTimer);
+            this._searchTimer = setTimeout(() => loadMediaLibrary(1), 400);
         });
     });
 
-    const editModal = new bootstrap.Modal(document.getElementById('editMediaModal'));
+    let editModal;
+    document.addEventListener('DOMContentLoaded', () => {
+        editModal = new bootstrap.Modal(document.getElementById('editMediaModal'));
+    });
 
     function openEditModal(media) {
         document.getElementById('edit_media_id').value = media.id;

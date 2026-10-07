@@ -62,8 +62,8 @@
                     </div>
 
                     <div class="col-lg-3 mb-3">
-                        <button type="submit" class="btn btn-primary w-100" id="saveHeaderBtn">
-                            <i class="bi bi-save me-1"></i> Save Header Settings
+                        <button type="submit" class="btn btn-primary w-100" id="saveHeaderBtn" style="white-space: nowrap;">
+                            <i class="bi bi-save me-1"></i> Save Header
                         </button>
                     </div>
                 </div>
@@ -280,6 +280,9 @@
                         </div>
                     </div>
                     <div class="tab-pane fade show active" id="library-panel" role="tabpanel">
+                        <div class="mb-3">
+                            <input type="text" id="mediaSearchInput" class="form-control" placeholder="Search by title or keyword..." oninput="loadMedia(1)">
+                        </div>
                         <div class="row g-2" id="mediaGrid">
                             <div class="col-12 text-center text-muted p-5">Loading media...</div>
                         </div>
@@ -376,7 +379,7 @@ document.getElementById('headerSettingsForm').addEventListener('submit', functio
     .catch(() => Swal.fire('Error', 'An error occurred while saving.', 'error'))
     .finally(() => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-save me-1"></i> Save Header Settings';
+        btn.innerHTML = '<i class="bi bi-save me-1"></i> Save Header';
     });
 });
 
@@ -491,7 +494,8 @@ function uploadFile(file) {
 }
 
 function loadMedia(page = 1) {
-    fetch(`{{ route("admin.media.index") }}?page=${page}`, {
+    const search = document.getElementById('mediaSearchInput')?.value || '';
+    fetch(`{{ route("admin.media.index") }}?page=${page}&search=${encodeURIComponent(search)}`, {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(res => res.json())

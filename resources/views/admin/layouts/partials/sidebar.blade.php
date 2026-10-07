@@ -45,6 +45,12 @@
             'label' => 'Site Settings',
         ],
         [
+            'page' => 'testimonials',
+            'route' => 'admin.testimonials.index',
+            'icon' => 'bi-chat-quote',
+            'label' => 'Testimonials',
+        ],
+        [
             'page' => 'seo-settings',
             'route' => 'admin.seo-settings.index',
             'icon' => 'bi-search',
