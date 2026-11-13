@@ -6,9 +6,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Public Project Details Page
-Route::get('/projects/{slug}', [App\Http\Controllers\ProjectController::class, 'show'])->name('projects.show');
-
 Auth::routes(['register' => false]);
 Route::get('admin', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('admin.login');
 
