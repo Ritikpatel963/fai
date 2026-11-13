@@ -20,6 +20,17 @@
             ]
         ],
         [
+            'page' => 'projects',
+            'route' => 'admin.projects.index',
+            'icon' => 'bi-briefcase',
+            'label' => 'Projects',
+            'submenus' => [
+                ['page' => 'projects.all', 'route' => 'admin.projects.index', 'label' => 'All Projects'],
+                ['page' => 'projects.create', 'route' => 'admin.projects.create', 'label' => 'Add New'],
+                ['page' => 'project-categories', 'route' => 'admin.project-categories.index', 'label' => 'Categories'],
+            ]
+        ],
+        [
             'page' => 'media',
             'route' => 'admin.media.index',
             'icon' => 'bi-images',
@@ -71,12 +82,15 @@
     <nav class="sidebar-nav">
         @foreach ($navItems as $item)
             @if(isset($item['submenus']))
+                @php
+                    $isSubmenuActive = str_starts_with($activePage, $item['page']) || ($item['page'] === 'blogs' && in_array($activePage, ['categories', 'tags'])) || ($item['page'] === 'projects' && in_array($activePage, ['project-categories']));
+                @endphp
                 <div class="nav-item has-submenu">
-                    <a class="nav-link d-flex align-items-center {{ str_starts_with($activePage, 'blogs') || in_array($activePage, ['categories', 'tags']) ? 'active' : '' }}" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-{{ $item['page'] }}">
+                    <a class="nav-link d-flex align-items-center {{ $isSubmenuActive ? 'active' : '' }}" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-{{ $item['page'] }}">
                         <i class="bi {{ $item['icon'] }}"></i><span>{{ $item['label'] }}</span>
                         <i class="bi bi-chevron-down ms-auto submenu-icon" style="font-size: 0.8rem;"></i>
                     </a>
-                    <div class="collapse {{ str_starts_with($activePage, 'blogs') || in_array($activePage, ['categories', 'tags']) ? 'show' : '' }}" id="submenu-{{ $item['page'] }}">
+                    <div class="collapse {{ $isSubmenuActive ? 'show' : '' }}" id="submenu-{{ $item['page'] }}">
                         <ul class="list-unstyled ps-4 ms-2 mt-1 border-start border-2 border-secondary-subtle">
                             @foreach($item['submenus'] as $submenu)
                                 <li class="mb-1">

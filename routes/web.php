@@ -30,6 +30,10 @@ Route::prefix('admin')
         // Resources Routes
         Route::resource('resources', App\Http\Controllers\Admin\ResourceController::class);
 
+        // Projects CMS Routes
+        Route::resource('projects', App\Http\Controllers\Admin\ProjectController::class);
+        Route::resource('project-categories', App\Http\Controllers\Admin\ProjectCategoryController::class)->except(['create', 'edit', 'show']);
+
         // Blog CMS Routes
         Route::resource('blogs', App\Http\Controllers\Admin\BlogController::class);
         Route::resource('categories', App\Http\Controllers\Admin\CategoryController::class)->except(['create', 'edit', 'show']);
