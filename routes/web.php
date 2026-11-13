@@ -6,6 +6,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Public Project Details Page
+Route::get('/projects/{slug}', [App\Http\Controllers\ProjectController::class, 'show'])->name('projects.show');
+
 Auth::routes(['register' => false]);
 Route::get('admin', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('admin.login');
 
@@ -29,6 +32,10 @@ Route::prefix('admin')
 
         // Resources Routes
         Route::resource('resources', App\Http\Controllers\Admin\ResourceController::class);
+
+        // Projects CMS Routes
+        Route::resource('projects', App\Http\Controllers\Admin\ProjectController::class);
+        Route::resource('project-categories', App\Http\Controllers\Admin\ProjectCategoryController::class)->except(['create', 'edit', 'show']);
 
         // Blog CMS Routes
         Route::resource('blogs', App\Http\Controllers\Admin\BlogController::class);
